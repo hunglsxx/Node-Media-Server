@@ -22,11 +22,13 @@ class NodeRelaySession extends EventEmitter {
   run() {
     let format = this.conf.ouPath.startsWith('rtsp://') ? 'rtsp' : 'flv';
     let argv = ['-i', this.conf.inPath, '-c', 'copy', '-f', format, this.conf.ouPath];
+    console.log('in:',this.conf.inPath);
     if (this.conf.inPath[0] === '/' || this.conf.inPath[1] === ':') {
       argv.unshift('-1');
       argv.unshift('-stream_loop');
       argv.unshift('-re');
     }
+    console.log('argv', argv);
 
     if (this.conf.inPath.startsWith('rtsp://') && this.conf.rtsp_transport) {
       if (RTSP_TRANSPORT.indexOf(this.conf.rtsp_transport) > -1) {
@@ -37,6 +39,43 @@ class NodeRelaySession extends EventEmitter {
 
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+    this.ffmpeg_exec.on('error', (e) => {
+      Logger.ffdebug(e);
+    });
+
+    this.ffmpeg_exec.stdout.on('data', (data) => {
+      Logger.ffdebug(`FF输出：${data}`);
+    });
+
+    this.ffmpeg_exec.stderr.on('data', (data) => {
+      Logger.ffdebug(`FF输出：${data}`);
+    });
+
+    this.ffmpeg_exec.on('close', (code) => {
+      Logger.log('[Relay end] id=', this.id);
+      this.emit('end', this.id);
+    });
+  }
+
+  runStatic() {
+    var argv = ['-re', '-stream_loop', '-1', '-i', this.conf.inPath];
+    for(var i in this.conf.ouPath) {
+      let format = this.conf.ouPath[i].startsWith('rtsp://') ? 'rtsp' : 'flv';
+      argv = argv.concat(['-c', 'copy', '-f', format, this.conf.ouPath[i]]);
+    }
+
+    console.log('argv', argv);
+
+    if (this.conf.inPath.startsWith('rtsp://') && this.conf.rtsp_transport) {
+      if (RTSP_TRANSPORT.indexOf(this.conf.rtsp_transport) > -1) {
+        argv.unshift(this.conf.rtsp_transport);
+        argv.unshift('-rtsp_transport');
+      }
+    }
+
+    Logger.ffdebug(argv.toString());
+    this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
+    console.log("PIDDD:",this.ffmpeg_exec.pid);
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
     });

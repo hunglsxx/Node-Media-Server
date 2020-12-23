@@ -57,8 +57,45 @@ function pushStream(req, res, next) {
   }
 }
 
+function pushStaticStream(req, res, next) {
+  let source = req.body.source;
+  let destination = req.body.destination;
+
+  let app = req.body.app;
+  let name = req.body.name;
+
+  if(!Array.isArray(destination)) {
+    destination = [destination];
+  }
+  
+  if (source && destination) {
+    this.nodeEvent.emit('relayPushStatic', source, destination, app, name);
+    res.sendStatus(200);
+  } else {
+    res.sendStatus(400);
+  }
+}
+
+function stopStream(req, res, next) {
+  var close = false;
+  if(req.params.id) {
+    this.sessions.forEach(function (session, id) {
+      if (session.constructor.name !== 'NodeRelaySession') {
+        return;
+      }
+      if(session.id == req.params.id) {
+        session.end();
+        return;
+      }
+    });
+  }
+  return res.json({close});
+}
+
 module.exports = {
   getStreams,
   pullStream,
-  pushStream
+  pushStream,
+  pushStaticStream,
+  stopStream
 };

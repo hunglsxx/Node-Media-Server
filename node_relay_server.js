@@ -36,6 +36,7 @@ class NodeRelayServer {
     }
     context.nodeEvent.on('relayPull', this.onRelayPull.bind(this));
     context.nodeEvent.on('relayPush', this.onRelayPush.bind(this));
+    context.nodeEvent.on('relayPushStatic', this.onRelayPushStatic.bind(this));
     context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
     context.nodeEvent.on('donePlay', this.onDonePlay.bind(this));
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
@@ -110,6 +111,24 @@ class NodeRelayServer {
     });
     this.dynamicSessions.set(id, session);
     session.run();
+    Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+  }
+
+  //从本地拉推到远端
+  onRelayPushStatic(source, destination, app, name) {
+    let conf = {};
+    conf.ffmpeg = this.config.relay.ffmpeg;
+    conf.inPath = source;
+    conf.ouPath = destination;
+    conf.startTime = Date.now();
+    let session = new NodeRelaySession(conf);
+    const id = session.id;
+    context.sessions.set(id, session);
+    session.on('end', (id) => {
+      this.dynamicSessions.delete(id);
+    });
+    this.dynamicSessions.set(id, session);
+    session.runStatic();
     Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
   }
 
