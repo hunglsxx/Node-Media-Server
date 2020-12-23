@@ -64,8 +64,6 @@ class NodeRelaySession extends EventEmitter {
       argv = argv.concat(['-c', 'copy', '-f', format, this.conf.ouPath[i]]);
     }
 
-    console.log('argv', argv);
-
     if (this.conf.inPath.startsWith('rtsp://') && this.conf.rtsp_transport) {
       if (RTSP_TRANSPORT.indexOf(this.conf.rtsp_transport) > -1) {
         argv.unshift(this.conf.rtsp_transport);
@@ -75,7 +73,7 @@ class NodeRelaySession extends EventEmitter {
 
     Logger.ffdebug(argv.toString());
     this.ffmpeg_exec = spawn(this.conf.ffmpeg, argv);
-    console.log("PIDDD:",this.ffmpeg_exec.pid);
+
     this.ffmpeg_exec.on('error', (e) => {
       Logger.ffdebug(e);
     });
