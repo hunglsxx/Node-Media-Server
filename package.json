@@ -1,14 +1,14 @@
 {
-  "name": "node-media-server",
+  "name": "custom-node-media-server",
   "version": "2.2.4",
-  "description": "A Node.js implementation of RTMP Server",
+  "description": "custom from node-media-server A Node.js implementation of RTMP Server",
   "main": "node_media_server.js",
   "scripts": {
     "test": "node app.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/illuspas/Node-Media-Server.git"
+    "url": "git+https://github.com/hunglsxx/Node-Media-Server.git"
   },
   "keywords": [
     "rtmp",
@@ -18,9 +18,9 @@
   "author": "Mingliang Chen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/illuspas/Node-Media-Server/issues"
+    "url": "https://github.com/hunglsxx/Node-Media-Server/issues"
   },
-  "homepage": "https://github.com/illuspas/Node-Media-Server#readme",
+  "homepage": "https://github.com/hunglsxx/Node-Media-Server#readme",
   "dependencies": {
     "basic-auth-connect": "^1.0.0",
     "chalk": "^2.4.2",
