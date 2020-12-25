@@ -97,11 +97,10 @@ class NodeRelaySession extends EventEmitter {
       var self = this;
       Logger.log('[Relay end] id=', this.id);
       this.emit('end', this.id);
-      
+
       if(self.conf.opts.callback 
           && self.conf.opts.callback.api 
           && self.conf.opts.callback.update_relay_status_endpoint) {
-
         var url = `${self.conf.opts.callback.api}/${self.conf.opts.callback.update_relay_status_endpoint}/${self.conf.opts.customRelay}/1`;
         axios({
           method: 'PATCH',
