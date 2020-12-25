@@ -1,6 +1,6 @@
 {
   "name": "custom-node-media-server",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "custom from node-media-server A Node.js implementation of RTMP Server",
   "main": "node_media_server.js",
   "scripts": {
@@ -28,7 +28,9 @@
     "express": "^4.16.4",
     "lodash": ">=4.17.13",
     "mkdirp": "1.0.3",
-    "ws": "^5.2.2"
+    "ws": "^5.2.2",
+    "axios": "^0.20.0",
+    "qs": "^6.9.4"
   },
   "engines": {
     "node": ">=8.0.0"

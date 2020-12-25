@@ -11,6 +11,8 @@ const { spawn } = require('child_process');
 
 const RTSP_TRANSPORT = ['udp', 'tcp', 'udp_multicast', 'http'];
 
+var axios = require('axios');
+
 class NodeRelaySession extends EventEmitter {
   constructor(conf) {
     super();
@@ -57,8 +59,13 @@ class NodeRelaySession extends EventEmitter {
     });
   }
 
-  runStatic() {
-    var argv = ['-re', '-stream_loop', '-1', '-i', this.conf.inPath];
+  runCustom(isLoop) {
+    var argv = ['-i', this.conf.inPath];
+    if(isLoop) {
+      argv.unshift('-1');
+      argv.unshift('-stream_loop');
+      argv.unshift('-re');
+    }
     for(var i in this.conf.ouPath) {
       let format = this.conf.ouPath[i].startsWith('rtsp://') ? 'rtsp' : 'flv';
       argv = argv.concat(['-c', 'copy', '-f', format, this.conf.ouPath[i]]);
@@ -87,8 +94,24 @@ class NodeRelaySession extends EventEmitter {
     });
 
     this.ffmpeg_exec.on('close', (code) => {
+      var self = this;
       Logger.log('[Relay end] id=', this.id);
       this.emit('end', this.id);
+      
+      if(self.conf.opts.callback 
+          && self.conf.opts.callback.api 
+          && self.conf.opts.callback.update_relay_status_endpoint) {
+
+        var url = `${self.conf.opts.callback.api}/${self.conf.opts.callback.update_relay_status_endpoint}/${self.conf.opts.customRelay}/1`;
+        axios({
+          method: 'PATCH',
+          url: url,
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          data : {}
+        }).then(function (response) {
+          Logger.log('[Updated session id]:', self.id, self.conf.opts.customRelay, response.data);
+        });
+      }
     });
   }
 

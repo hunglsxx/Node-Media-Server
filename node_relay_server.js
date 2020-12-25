@@ -11,6 +11,7 @@ const context = require('./node_core_ctx');
 const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
 const fs = require('fs');
 const _ = require('lodash');
+var axios = require('axios');
 
 class NodeRelayServer {
   constructor(config) {
@@ -36,8 +37,7 @@ class NodeRelayServer {
     }
     context.nodeEvent.on('relayPull', this.onRelayPull.bind(this));
     context.nodeEvent.on('relayPush', this.onRelayPush.bind(this));
-    context.nodeEvent.on('relayPushStatic', this.onRelayPushStatic.bind(this));
-    context.nodeEvent.on('relayPushDynamic', this.onRelayPushDynamic.bind(this));
+    context.nodeEvent.on('relayPushCustom', this.onRelayPushCustom.bind(this));
     context.nodeEvent.on('prePlay', this.onPrePlay.bind(this));
     context.nodeEvent.on('donePlay', this.onDonePlay.bind(this));
     context.nodeEvent.on('postPublish', this.onPostPublish.bind(this));
@@ -115,13 +115,21 @@ class NodeRelayServer {
     Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
   }
 
-  //从本地拉推到远端
-  onRelayPushStatic(source, destination, app, name) {
+  onRelayPushCustom(source, destination, app, name, opts) {
     let conf = {};
+    var isLoop = true;
+    if(app && name) {
+      conf.app = app;
+      conf.name = name;
+      source = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
+      isLoop = false;
+    }
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = source;
     conf.ouPath = destination;
     conf.startTime = Date.now();
+    if(this.config.callback) opts.callback = this.config.callback;
+    conf.opts = opts;
     let session = new NodeRelaySession(conf);
     const id = session.id;
     context.sessions.set(id, session);
@@ -129,27 +137,22 @@ class NodeRelayServer {
       this.dynamicSessions.delete(id);
     });
     this.dynamicSessions.set(id, session);
-    session.runStatic();
+    session.runCustom(isLoop);
     Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
-  }
+    if(this.config.callback 
+        && this.config.callback.api 
+        && this.config.callback.update_relay_id_endpoint) {
 
-  onRelayPushDynamic(destination, app, name) {
-    let conf = {};
-    conf.app = app;
-    conf.name = name;
-    conf.ffmpeg = this.config.relay.ffmpeg;
-    conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
-    conf.ouPath = destination;
-    conf.startTime = Date.now();
-    let session = new NodeRelaySession(conf);
-    const id = session.id;
-    context.sessions.set(id, session);
-    session.on('end', (id) => {
-      this.dynamicSessions.delete(id);
-    });
-    this.dynamicSessions.set(id, session);
-    session.runStatic();
-    Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+      var url = `${this.config.callback.api}/${this.config.callback.update_relay_id_endpoint}/${opts.customRelay}/${id}`;
+      axios({
+        method: 'PATCH',
+        url: url,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        data : {}
+      }).then(function (response) {
+        Logger.log('[Updated session id]:', id, opts.customRelay, response.data);
+      });
+    }
   }
 
   onPrePlay(id, streamPath, args) {

@@ -70,40 +70,24 @@ function pushStream(req, res, next) {
   }
 }
 
-function pushStaticStream(req, res, next) {
-  let source = req.body.source;
-  let destination = req.body.destination;
+function pushStreamCustom(req, res, next) {
   let app = req.body.app;
   let name = req.body.name;
-
+  let destination = req.body.destination;
+  let source = req.body.source;
+  let opts = {
+    customRelay: req.body.custom_relay,
+    customUserToken: req.body.custom_user_token
+  }
+  if(!destination) return res.status(400).send({message: 'destination is required'});
   if (!Array.isArray(destination)) {
     destination = [destination];
   }
-  if (source && destination) {
-    this.nodeEvent.emit('relayPushStatic', source, destination, app, name);
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(400);
-  }
-}
-
-function pushDynamicStream(req, res, next) {
-  let destination = req.body.destination;
-  let app = req.body.app;
-  let name = req.body.name;
-  if (destination && app && name) {
-    if (!Array.isArray(destination)) {
-      destination = [destination];
-    }
-    this.nodeEvent.emit('relayPushDynamic', destination, app, name);
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(400);
-  }
+  this.nodeEvent.emit('relayPushCustom', source, destination, app, name, opts);
+  return res.status(200).send({message: 'OK'});
 }
 
 function stopStream(req, res, next) {
-  var close = false;
   if (req.params.id) {
     this.sessions.forEach(function (session, id) {
       if (session.constructor.name !== 'NodeRelaySession') {
@@ -115,15 +99,14 @@ function stopStream(req, res, next) {
       }
     });
   }
-  return res.json({ close });
+  return res.json({message: 'OK'});
 }
 
 module.exports = {
   getStreams,
   pullStream,
   pushStream,
-  pushStaticStream,
-  pushDynamicStream,
+  pushStreamCustom,
   stopStream,
   getStreamList
 };
